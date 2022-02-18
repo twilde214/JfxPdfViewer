@@ -1,10 +1,12 @@
 plugins {
     id "application"
     id 'java'
+    id 'org.openjfx.javafxplugin' version '0.0.10'
 }
 
-group 'org.example'
+group 'com.thomasjwilde'
 version '1.0-SNAPSHOT'
+
 
 repositories {
     mavenCentral()
@@ -18,11 +20,17 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }
 
+javafx {
+    version = '15'
+    modules = ['javafx.base', 'javafx.graphics', 'javafx.controls', 'javafx.web']
+}
+
+
 test {
     useJUnitPlatform()
 }
 
 application {
-    mainModule = "com.thomasjwilde.example.multi.app"
-    mainClass = "com.thomasjwilde.example.multi.app.Main"
+    mainModule = "com.thomasjwilde.demos.pdf"
+    mainClass = "com.thomasjwilde.demos.pdf.Main"
 }

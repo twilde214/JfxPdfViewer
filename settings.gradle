@@ -1,4 +1,4 @@
-rootProject.name = 'Parent'
+rootProject.name = 'JfxPdfViewer'
 include 'lib'
 include 'app'
 

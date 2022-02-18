@@ -1,12 +1,18 @@
 plugins {
     id 'java'
+    id 'org.openjfx.javafxplugin' version '0.0.10'
 }
 
-group 'org.example'
+group 'com.thomasjwilde'
 version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+}
+
+javafx {
+    version = '15'
+    modules = ['javafx.base', 'javafx.graphics', 'javafx.controls', 'javafx.web']
 }
 
 dependencies {
