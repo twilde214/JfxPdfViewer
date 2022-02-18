@@ -2,7 +2,6 @@ package com.thomasjwilde.pdf;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Worker;
-import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 
@@ -18,9 +17,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.Base64;
 
 /**
- * WebViewPDFJS is a wrapper class of WebView which allows the WebView to display pdfs.  The actual url of the WebView can be tracked using the actualURL property
+ * WebViewPDFJS is a wrapper class of WebView which allows the WebView to display pdfs.  The actual url of the WebView can be tracked using the actualURL property.
  */
-public class WebViewPDFJS extends StackPane {
+public class WebViewPDFJS{
 
     private WebView webView;
     private final StringProperty actualURL = new SimpleStringProperty(this, "pseudoURL");
@@ -41,7 +40,6 @@ public class WebViewPDFJS extends StackPane {
     }
 
     private void init(){
-        getChildren().add(webView);
         WebEngine webEngine = webView.getEngine();
         webEngine.setJavaScriptEnabled(true);
         webEngine.locationProperty().addListener((obs, oldLocation, newLocation) -> {
@@ -58,6 +56,7 @@ public class WebViewPDFJS extends StackPane {
                 }
 
             }
+
             // Pdf on the web needs to be downloaded to temp, then navigated to
             else if(newLocation != null && newLocation.startsWith("http") && newLocation.endsWith(".pdf")){
                 localPDFPath = Paths.get(System.getProperty("user.home")).resolve("doc.pdf");
@@ -66,12 +65,14 @@ public class WebViewPDFJS extends StackPane {
                 webView.getEngine().load(getPDFJSViewer());
 
             }
+
             // WebView needs to start with https://
             else if(newLocation != null && !newLocation.startsWith("file:") && !newLocation.startsWith("http")){
                 webView.getEngine().load("https://" + newLocation);
             }
+
             // If the new location is the pdf.js viewer, don't update the actual url
-            else if (newLocation != null && !newLocation.startsWith("http://jar")){
+            else if (newLocation != null && !newLocation.startsWith("http://jar") && !newLocation.startsWith("https://jar")){
                 setActualURL(newLocation);
             }
 

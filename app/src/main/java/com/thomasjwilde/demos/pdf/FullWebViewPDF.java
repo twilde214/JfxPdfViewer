@@ -8,7 +8,7 @@ public class FullWebViewPDF extends DecoratedWebView {
     private WebViewPDFJS webViewPDFJS;
     public FullWebViewPDF(){
         webViewPDFJS = new WebViewPDFJS();
-        setCenter(webViewPDFJS);
+        setCenter(webViewPDFJS.getWebView());
 
         webViewPDFJS.actualURLProperty().addListener(((observable, oldValue, newValue) -> {
             getTextField().setText(newValue);
