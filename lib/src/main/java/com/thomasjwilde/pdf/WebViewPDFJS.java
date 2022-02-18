@@ -32,7 +32,7 @@ public class WebViewPDFJS{
 
     /**
      * Constructor to allow passing of user's own WebView
-     * @param webView
+     * @param webView User defined WebView
      */
     public WebViewPDFJS(WebView webView){
         this.webView = new WebView();
