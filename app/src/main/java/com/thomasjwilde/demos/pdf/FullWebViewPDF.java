@@ -1,6 +1,7 @@
 package com.thomasjwilde.demos.pdf;
 
 import com.thomasjwilde.pdf.WebViewPDFJS;
+import javafx.scene.web.WebView;
 
 public class FullWebViewPDF extends DecoratedWebView {
 
@@ -8,15 +9,10 @@ public class FullWebViewPDF extends DecoratedWebView {
     public FullWebViewPDF(){
         webViewPDFJS = new WebViewPDFJS();
         setCenter(webViewPDFJS);
-        webViewPDFJS.getWebView().getEngine().locationProperty().addListener((observable, oldValue, newValue) -> {
-            if(newValue != null && !newValue.startsWith("http://jar")){
-                getTextField().setText(newValue);
-            }
-        });
-        webViewPDFJS.pseudoURLProperty().addListener(((observable, oldValue, newValue) -> {
+
+        webViewPDFJS.actualURLProperty().addListener(((observable, oldValue, newValue) -> {
             getTextField().setText(newValue);
         }));
-        webViewPDFJS.navigateToPdfViewer();
 
 
     }
@@ -34,5 +30,13 @@ public class FullWebViewPDF extends DecoratedWebView {
     @Override
     public void loadURL(String text) {
         webViewPDFJS.getWebView().getEngine().load(text);
+    }
+
+    public WebViewPDFJS getWebViewPDFJS() {
+        return webViewPDFJS;
+    }
+
+    public WebView getWebView(){
+        return webViewPDFJS.getWebView();
     }
 }

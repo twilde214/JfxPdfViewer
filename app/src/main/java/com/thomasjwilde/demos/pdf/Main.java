@@ -12,9 +12,9 @@ public class Main extends Application {
     public void start(Stage stage) throws IOException {
 
         FullWebViewPDF webViewPDFJS = new FullWebViewPDF();
+        webViewPDFJS.getWebView().getEngine().load("http://www.africau.edu/images/default/sample.pdf");
 
-
-        Scene scene = new Scene(webViewPDFJS, 320, 240);
+        Scene scene = new Scene(webViewPDFJS, 800, 600);
         stage.setTitle("Hello!");
         stage.setScene(scene);
         stage.show();

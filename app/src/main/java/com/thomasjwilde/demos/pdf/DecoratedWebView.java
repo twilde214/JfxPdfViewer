@@ -10,22 +10,23 @@ import javafx.scene.layout.Priority;
 public abstract class DecoratedWebView extends BorderPane {
 
     protected TextField textField = new TextField();
+    protected Button backButton = new Button("Back");
+    protected Button forwardButton = new Button("Forward");
+    protected Button goButton = new Button("Go");
+
 
     public DecoratedWebView(){
         setPadding(new Insets(5));
 
-        Button backButton = new Button("Back");
         backButton.setOnAction(event -> goBack());
-        Button forwardButton = new Button("Forward");
         forwardButton.setOnAction(event -> goForward());
-
         textField.setOnAction(event -> loadURL(textField.getText()));
-        Button goButton = new Button("Go");
         goButton.setOnAction(event -> loadURL(textField.getText()));
 
         HBox.setHgrow(textField, Priority.ALWAYS);
         HBox hBox = new HBox(backButton, forwardButton, textField, goButton);
         hBox.setSpacing(5);
+        hBox.setPadding(new Insets(5));
 
         setTop(hBox);
     }

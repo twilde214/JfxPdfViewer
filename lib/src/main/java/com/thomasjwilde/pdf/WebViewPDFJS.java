@@ -17,106 +17,142 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Base64;
 
+/**
+ * WebViewPDFJS is a wrapper class of WebView which allows the WebView to display pdfs.  The actual url of the WebView can be tracked using the actualURL property
+ */
 public class WebViewPDFJS extends StackPane {
 
     private WebView webView;
-    private StringProperty pseudoURL = new SimpleStringProperty(this, "pseudoURL");
-    private String pseudoURLShadow;
+    private final StringProperty actualURL = new SimpleStringProperty(this, "pseudoURL");
     private Path localPDFPath;
 
     public WebViewPDFJS(){
         webView = new WebView();
+        init();
+    }
+
+    /**
+     * Constructor to allow passing of user's own WebView
+     * @param webView
+     */
+    public WebViewPDFJS(WebView webView){
+        this.webView = new WebView();
+        init();
+    }
+
+    private void init(){
         getChildren().add(webView);
         WebEngine webEngine = webView.getEngine();
         webEngine.setJavaScriptEnabled(true);
         webEngine.locationProperty().addListener((obs, oldLocation, newLocation) -> {
+
+            // A local pdf can be navigated to directly
             if (newLocation != null && newLocation.startsWith("file:") && newLocation.endsWith(".pdf")) {
-                System.out.println("new location was local pdf: " + newLocation);
-                pseudoURLShadow = newLocation;
+                setActualURL(newLocation);
+
                 try {
-                    localPDFPath = Paths.get(new URL(pseudoURLShadow).toURI());
+                    localPDFPath = Paths.get(new URL(newLocation).toURI());
+                    webView.getEngine().load(getPDFJSViewer());
                 } catch (URISyntaxException | MalformedURLException e) {
                     e.printStackTrace();
                 }
 
-                webView.getEngine().load(getPDFJSViewer());
-            }else if(newLocation != null && newLocation.startsWith("http") && newLocation.endsWith(".pdf")){
-                localPDFPath = Paths.get(System.getProperty("user.home")).resolve("doc.pdf");
-                try {
-                    copyFileToTarget(newLocation, localPDFPath);
-                    pseudoURLShadow = newLocation;
-                    webView.getEngine().load(getPDFJSViewer());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }else if(newLocation != null && !newLocation.startsWith("file:") && !newLocation.startsWith("http")){
-                webView.getEngine().load("http://" + newLocation);
             }
+            // Pdf on the web needs to be downloaded to temp, then navigated to
+            else if(newLocation != null && newLocation.startsWith("http") && newLocation.endsWith(".pdf")){
+                localPDFPath = Paths.get(System.getProperty("user.home")).resolve("doc.pdf");
+                copyFileToTarget(newLocation, localPDFPath);
+                setActualURL(newLocation);
+                webView.getEngine().load(getPDFJSViewer());
+
+            }
+            // WebView needs to start with https://
+            else if(newLocation != null && !newLocation.startsWith("file:") && !newLocation.startsWith("http")){
+                webView.getEngine().load("https://" + newLocation);
+            }
+            // If the new location is the pdf.js viewer, don't update the actual url
+            else if (newLocation != null && !newLocation.startsWith("http://jar")){
+                setActualURL(newLocation);
+            }
+
         });
         webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == Worker.State.SUCCEEDED) {
                 if(webEngine.getLocation().endsWith("web/viewer.html")){
-                    if(pseudoURLShadow != null){
-                        try {
-                            navigateToLocalPDF(localPDFPath);
-                            System.out.println("setting pseudo url to " + pseudoURLShadow);
-                            pseudoURL.set(pseudoURLShadow);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
+                    navigateToLocalPDF(localPDFPath);
                 }
             }
         });
     }
 
+    /**
+     * Get the String URL location of the pdf.js viewer to load into the WebView
+     * @return String of the pdf.js viewer.html url
+     */
     public String getPDFJSViewer(){
         URL url = getClass().getResource("/com/thomasjwilde/pdf/web/viewer.html");
         try {
-            return url.toURI().toString();
+            if (url != null) {
+                return url.toURI().toString();
+            }
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    public void navigateToPdfViewer(){
-        URL url = getClass().getResource("/com/thomasjwilde/pdf/web/viewer.html");
-        if(url == null){
-            System.out.println("url is null");
-        }else{
-            System.out.println("url is not null");
+    /**
+     * Method to tell the pdf.js to load a local pdf path into the pdf.js viewer
+     * @param path The local path of the document to be loaded
+     */
+    public void navigateToLocalPDF(Path path){
+        byte[] fileContent = new byte[0];
+        try {
+            fileContent = Files.readAllBytes(path);
+            String base64 = Base64.getEncoder().encodeToString(fileContent);
+            webView.getEngine().executeScript("openFileFromBase64('" + base64 + "')");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-//        webView.getEngine().load("file:///C:/Users/Thomas/Downloads/wildepdf/web/viewer.html");
-        webView.getEngine().load("file:///C:/Users/Thomas/Downloads/compressed.tracemonkey-pldi-09.pdf");
     }
 
-    public void navigateToLocalPDF(Path path) throws IOException {
-        byte[] fileContent = Files.readAllBytes(path);
-        String base64 = Base64.getEncoder().encodeToString(fileContent);
-        webView.getEngine().executeScript("openFileFromBase64('" + base64 + "')");
+    /**
+     * Method to download pdfs from online sources
+     * @param fileURL The url of the pdf to download
+     * @param targetPath The local target path to copy the pdf to
+     */
+    public void copyFileToTarget(String fileURL, Path targetPath){
+        InputStream in = null;
+        try {
+            in = new URL(fileURL).openStream();
+            Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally{
+            if(in != null){
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     public WebView getWebView() {
         return webView;
     }
 
-    public String getPseudoURL() {
-        return pseudoURL.get();
+    public String getActualURL() {
+        return actualURL.get();
     }
 
-    public StringProperty pseudoURLProperty() {
-        return pseudoURL;
+    public StringProperty actualURLProperty() {
+        return actualURL;
     }
 
-    public void setPseudoURL(String pseudoURL) {
-        this.pseudoURL.set(pseudoURL);
-    }
-
-    public void copyFileToTarget(String fileURL, Path targetPath) throws IOException {
-        InputStream in = new URL(fileURL).openStream();
-        Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
-        in.close();
+    public void setActualURL(String actualURL) {
+        this.actualURL.set(actualURL);
     }
 }
